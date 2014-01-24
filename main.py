@@ -11,6 +11,7 @@ except(Exception):
     print("Cannot import matplotlib")
 
 from functions import *
+from util import getDataFromFile
 
 ################################################################################
 # OPTIONS AND PARAMETERS
@@ -30,27 +31,22 @@ data_file = "data.csv"
 num_X0 = 100
 
 # Choose wheter you want to plot the data + fitted functions
-plot_results = False
+plot_results = True
 
 ################################################################################
 # DATA EXTRACTION
 ################################################################################
 
 # We get the data from a csv file
-data = open(data_file)
-x = np.arange(1,21)
-
-d = data.readline() 
-d = str.split(d,",")
-for index,number in enumerate(d):
-    d[index] = float(number)
-d = np.array(d)
-
-data.close()
+# The code is in util.py
+d = getDataFromFile(data_file)
 
 ################################################################################
 # DATA STRUCTURES
 ################################################################################
+
+# The array with the x coordinates for the data point (1,2,...,20)
+x = np.arange(1,21)
 
 # Will contain the value of the fitted function at the data coordinates
 y = np.zeros(x.shape)
@@ -75,30 +71,33 @@ for index,f in enumerate(fitting_functions):
 # FUNCTION FITTING
 ################################################################################
 
-# Start the final plot
-if (plot_results and can_plot):
-    plt.plot(x,d,'o')
+# We loop on all the datasets
+for dataset in range(d.shape[0]):
 
-for index,f in enumerate(fitting_functions):
-    fitting_scores[index] = 1e12
-    popts.append([])
-
-    for x0 in X0:
-        # Optimise the fitting of the curve
-        (popt, pcov) = so.curve_fit(f, x, d, [x0,-1.0,1.0])
-        y = f(x, *popt)
-        
-        # Compute the norm of the error, if better than previous best, keep it.
-        norm = np.linalg.norm(y-d, 2)
-        if norm < fitting_scores[index]:
-            fitting_scores[index] = norm
-            popts[index] = popt
-
-    # Compute the function for the final solution for display
+    # Start the final plot
     if (plot_results and can_plot):
-        y = f(X0,*(popts[index]))
-        plt.plot(X0,y)
+        plt.plot(x,d[dataset][:],'o')
 
-# Finally show the whole plot
-if (plot_results and can_plot):
-    plt.show()
+    for index,f in enumerate(fitting_functions):
+        fitting_scores[index] = 1e12
+        popts.append([])
+
+        for x0 in X0:
+            # Optimise the fitting of the curve
+            (popt, pcov) = so.curve_fit(f, x, d[dataset][:], [x0,-1.0,1.0])
+            y = f(x, *popt)
+            
+            # Compute the norm of the error, if better than previous best, keep it.
+            norm = np.linalg.norm(y-d[dataset][:], 2)
+            if norm < fitting_scores[index]:
+                fitting_scores[index] = norm
+                popts[index] = popt
+
+        # Compute the function for the final solution for display
+        if (plot_results and can_plot):
+            y = f(X0,*(popts[index]))
+            plt.plot(X0,y)
+
+    # Finally show the whole plot
+    if (plot_results and can_plot):
+        plt.show(block=False)

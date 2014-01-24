@@ -2,40 +2,31 @@ import scipy.optimize as so
 import numpy as np
 import matplotlib.pyplot as plt
 
+from functions import *
 
-def stepFunction(x, x0, f0, f1):
-    if x > x0:
-        return f1
-    else:
-        return f0
+################################################################################
+# OPTIONS AND PARAMETERS
+################################################################################
 
-stepFunction_vec = np.vectorize(stepFunction)
+# Add your function in functions.py, then put the names here of all the ones
+# you want to fit to your data. You can have as many as you want.
+fitting_functions = [
+    stepFunction,
+    hingeFunction
+    ]
 
-def stepFunction_vec_self(x, x0, f0, f1):
-    y = np.zeros(x.shape)
-    for i in range(len(y)):
-        y[i] = stepFunction(x[i], x0, f0, f1)
-    return y
+# Put the name of your data file here
+data_file = "data.csv"
 
+# Number of points to try and put the "inflexion" point of the fitting function.
+num_X0 = 100
 
-def hingeFunction(x, x0, f0, m):
-    if x > x0:
-        return f0+m*(x-x0)
-    else:
-        return f0
+################################################################################
+# DATA EXTRACTION
+################################################################################
 
-hingeFunction_vec = np.vectorize(hingeFunction)
-
-def hingeFunction_vec_self(x, x0, f0, m):
-    y = np.zeros(x.shape)
-    for i in range(len(y)):
-        y[i] = hingeFunction(x[i], x0, f0, m)
-    return y
-
-
-
-
-data = open("data.csv")
+# We get the data from a csv file
+data = open(data_file)
 x = np.arange(1,21)
 
 d = data.readline() 
@@ -44,45 +35,56 @@ for index,number in enumerate(d):
     d[index] = float(number)
 d = np.array(d)
 
+data.close()
+
+################################################################################
+# DATA STRUCTURES
+################################################################################
+
+# Will contain the value of the fitted function at the data coordinates
 y = np.zeros(x.shape)
-y2 = np.zeros(x.shape)
 
-min_x0 = 0.0
-min_norm = 1e12
+# Will contain the norm of the error of each fitted function
+fitting_scores = np.zeros(len(fitting_functions))
 
-min_x02 = 0.0
-min_norm2 = 1e12
+# Will contain the optimal parameters for each fitted function
+popts = []
 
-num_x0 = 21
+# Coordinates at which to try to place the "inflexion" point of the fitting
+# functions
+X0 = np.linspace(1.0,20.0,num_X0)
 
-for X0 in range(0,num_x0):
-    x0 = X0*20.0/num_x0
-    (popt, pcov) = so.curve_fit(stepFunction_vec_self, x, d, [x0,-1.0,1.0])
-    (popt2, pcov2) = so.curve_fit(hingeFunction_vec_self, x, d, [x0,-1.0,0.0])
-    y = stepFunction_vec_self(x, *popt)
-    y2 = hingeFunction_vec_self(x, *popt2)
+# Vectorise the fitting functions
+# It's technical, it lets you define the function for a single point, and
+# numpy transforms it to accept vectors.
+for index,f in enumerate(fitting_functions):
+    fitting_functions[index] = np.vectorize(f)
 
-    norm = np.linalg.norm(y-d, 2)
-    if norm < min_norm:
-        min_x0 = x0
-        min_norm = norm
-        #print min_norm
-    norm2 = np.linalg.norm(y2-d, 2)
-    if norm2 < min_norm2:
-        min_x02 = x0
-        min_norm2 = norm2
-        print min_norm2
+################################################################################
+# FUNCTION FITTING
+################################################################################
 
-(popt, pcov) = so.curve_fit(stepFunction_vec_self, x, d, [min_x0,-1.0,1.0])
-y = stepFunction_vec_self(x, *popt)
-
-(popt2, pcov2) = so.curve_fit(hingeFunction_vec_self, x, d, [min_x02,-1.0,1.0])
-y2 = hingeFunction_vec_self(x, *popt2)
-
-print popt2
-
+# Start the final plot
 plt.plot(x,d,'o')
-plt.plot(x,y)
-plt.plot(x,d,'or')
-plt.plot(x,y2, 'r')
+
+for index,f in enumerate(fitting_functions):
+    fitting_scores[index] = 1e12
+    popts.append([])
+
+    for x0 in X0:
+        # Optimise the fitting of the curve
+        (popt, pcov) = so.curve_fit(f, x, d, [x0,-1.0,1.0])
+        y = f(x, *popt)
+        
+        # Compute the norm of the error, if better than previous best, keep it.
+        norm = np.linalg.norm(y-d, 2)
+        if norm < fitting_scores[index]:
+            fitting_scores[index] = norm
+            popts[index] = popt
+
+    # Compute the function for the final solution for display
+    y = f(X0,*(popts[index]))
+    plt.plot(X0,y)
+
+# Finally show the whole plot
 plt.show()

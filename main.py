@@ -2,6 +2,14 @@ import scipy.optimize as so
 import numpy as np
 import matplotlib.pyplot as plt
 
+#Try to see if we can
+try:
+    import matplotlib.pyplot as plt
+    can_plot = True
+except(Exception):
+    can_plot = False
+    print("Cannot import matplotlib")
+
 from functions import *
 
 ################################################################################
@@ -20,6 +28,9 @@ data_file = "data.csv"
 
 # Number of points to try and put the "inflexion" point of the fitting function.
 num_X0 = 100
+
+# Choose wheter you want to plot the data + fitted functions
+plot_results = False
 
 ################################################################################
 # DATA EXTRACTION
@@ -65,7 +76,8 @@ for index,f in enumerate(fitting_functions):
 ################################################################################
 
 # Start the final plot
-plt.plot(x,d,'o')
+if (plot_results and can_plot):
+    plt.plot(x,d,'o')
 
 for index,f in enumerate(fitting_functions):
     fitting_scores[index] = 1e12
@@ -83,8 +95,10 @@ for index,f in enumerate(fitting_functions):
             popts[index] = popt
 
     # Compute the function for the final solution for display
-    y = f(X0,*(popts[index]))
-    plt.plot(X0,y)
+    if (plot_results and can_plot):
+        y = f(X0,*(popts[index]))
+        plt.plot(X0,y)
 
 # Finally show the whole plot
-plt.show()
+if (plot_results and can_plot):
+    plt.show()

@@ -91,9 +91,11 @@ for index,f in enumerate(fitting_functions):
 # FUNCTION FITTING
 ################################################################################
 
+dataset_index = -1
 for condition in conditions_numbers:
     for subject in subjects_numbers:
         for electrode in electrodes_numbers:
+            dataset_index+=1
             if not isinstance(electrode, collections.Iterable):
                 electrode = [electrode]
             electrode_averaging = 0.0
@@ -111,7 +113,7 @@ for condition in conditions_numbers:
                 plt.plot(x,dataset[:],'o')
 
             for index,f in enumerate(fitting_functions):
-                fitting_scores[0][index] = 1e12
+                fitting_scores[dataset_index][index] = 1e12
                 popts.append([])
 
                 for x0 in X0:
@@ -121,8 +123,8 @@ for condition in conditions_numbers:
                     
                     # Compute the norm of the error, if better than previous best, keep it.
                     norm = np.linalg.norm(y-dataset[:], 2)
-                    if norm < fitting_scores[0][index]:
-                        fitting_scores[0][index] = norm
+                    if norm < fitting_scores[dataset_index][index]:
+                        fitting_scores[dataset_index][index] = norm
                         popts[index] = popt
                
                 # Compute the function for the final solution for display

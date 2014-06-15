@@ -3,31 +3,35 @@ import numpy
 
 def getDataFromFile(filename):
     """
-    Return an array with N rows and M columns.
-
-    N is the number of datasets
-    M is the number of data point in each set
+    Return an array with data from a CSV file
     """
 
-    data = open(filename)
-    data_array = []
-    for line in data:
-        # Data points need to be separated by a comma
-        d = str.split(line,",")
+    data_array = numpy.loadtxt(open(filename,"rb"),delimiter=",",skiprows=1)
+    
+    output = numpy.ndarray(shape=(numpy.amax(data_array[:,0])+1,
+                            numpy.amax(data_array[:,1])+1,
+                            numpy.amax(data_array[:,2])+1,
+                            numpy.amax(data_array[:,3])+1))
 
-        # We transform the strings into floats
-        for index,number in enumerate(d):
-            d[index] = float(number)
+    for l in range(data_array.shape[0]):
+        output[data_array[l, 0],data_array[l, 1],data_array[l, 2],data_array[l, 3]]=  data_array[l, 4]
 
-        # We add the processed dataset in the Python array
-        data_array.append(d)
+    return output
 
-    data.close()
-        
-    # Finally we transform the data in a numpy array
-    data_array = numpy.array(data_array)
-
-    return data_array
+def parseList(input_string):
+    blocks = input_string.split(",")
+    output = []
+    for block in blocks:
+        block = block.split("..")
+        if len(block) > 1:
+            output.extend(range(int(block[0]), int(block[1])+1))
+            continue
+        block = block[0].split("+")
+        if len(block) > 1:
+            output.append([int(x) for x in block])
+            continue
+        output.extend([int(block[0])])
+    return output
 
 def exportResults(filename, options, func_names, fitting_functions,
                   fitting_scores, popts):

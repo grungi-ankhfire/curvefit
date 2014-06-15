@@ -1,6 +1,7 @@
 import scipy.optimize as so
 import numpy as np
 import matplotlib.pyplot as plt
+import collections
 
 #Try to see if we can
 try:
@@ -11,7 +12,7 @@ except(Exception):
     print("Cannot import matplotlib")
 
 from functions import *
-from util import getDataFromFile, exportResults
+from util import getDataFromFile, parseList, exportResults
 
 ################################################################################
 # OPTIONS AND PARAMETERS
@@ -25,7 +26,16 @@ fitting_functions = [
     ]
 
 # Put the name of your data file here
-data_file = "data.csv"
+data_file = "DataforBastien.csv"
+
+# Electrode/subject/condition list syntax (comma-separated):
+#           x : isolated electrode
+#           x..y : include isolated electrodes from x to y (included)
+#           x+y : average several electrodes
+# ex : "1, 2, 3, 4..10, 11+12, 13, 14"
+electrodes = "1,96"
+subjects = "1"
+conditions = "1"
 
 # Name of the file for the export
 results_file = "results.txt"
@@ -44,18 +54,22 @@ plot_results = True
 # The code is in util.py
 d = getDataFromFile(data_file)
 
+electrodes_numbers = parseList(electrodes)
+conditions_numbers = parseList(conditions)
+subjects_numbers = parseList(subjects)
+
 ################################################################################
 # DATA STRUCTURES
 ################################################################################
 
 # The array with the x coordinates for the data point (1,2,...,20)
-x = np.arange(1,21)
+x = np.arange(1,d.shape[3]+1)
 
 # Will contain the value of the fitted function at the data coordinates
 y = np.zeros(x.shape)
 
 # Will contain the norm of the error of each fitted function
-fitting_scores = np.zeros([d.shape[0],len(fitting_functions)])
+fitting_scores = np.zeros([len(electrodes_numbers),len(fitting_functions)])
 
 # Will contain the optimal parameters for each fitted function, for each
 # data set. First indice is for dataset, second for function.
@@ -77,40 +91,50 @@ for index,f in enumerate(fitting_functions):
 # FUNCTION FITTING
 ################################################################################
 
-# We loop on all the datasets
-for dataset in range(d.shape[0]):
+for condition in conditions_numbers:
+    for subject in subjects_numbers:
+        for electrode in electrodes_numbers:
+            if not isinstance(electrode, collections.Iterable):
+                electrode = [electrode]
+            electrode_averaging = 0.0
+            dataset = numpy.zeros(d.shape[3])
+            for e in electrode:
+                dataset += d[subject, condition, e, :]
+                electrode_averaging += 1.0
+            dataset = dataset / electrode_averaging
 
-    popts = []
+            # Compute the fit        
+            popts = []
 
-    # Start the final plot
-    if (plot_results and can_plot):
-        plt.plot(x,d[dataset][:],'o')
+            # Start the final plot
+            if (plot_results and can_plot):
+                plt.plot(x,dataset[:],'o')
 
-    for index,f in enumerate(fitting_functions):
-        fitting_scores[dataset][index] = 1e12
-        popts.append([])
+            for index,f in enumerate(fitting_functions):
+                fitting_scores[0][index] = 1e12
+                popts.append([])
 
-        for x0 in X0:
-            # Optimise the fitting of the curve
-            (popt, pcov) = so.curve_fit(f, x, d[dataset][:], [x0,-1.0,1.0])
-            y = f(x, *popt)
-            
-            # Compute the norm of the error, if better than previous best, keep it.
-            norm = np.linalg.norm(y-d[dataset][:], 2)
-            if norm < fitting_scores[dataset][index]:
-                fitting_scores[dataset][index] = norm
-                popts[index] = popt
-       
-        # Compute the function for the final solution for display
-        if (plot_results and can_plot):
-            y = f(X0,*(popts[index]))
-            plt.plot(X0,y)
+                for x0 in X0:
+                    # Optimise the fitting of the curve
+                    (popt, pcov) = so.curve_fit(f, x, dataset[:], [x0,-1.0,1.0])
+                    y = f(x, *popt)
+                    
+                    # Compute the norm of the error, if better than previous best, keep it.
+                    norm = np.linalg.norm(y-dataset[:], 2)
+                    if norm < fitting_scores[0][index]:
+                        fitting_scores[0][index] = norm
+                        popts[index] = popt
+               
+                # Compute the function for the final solution for display
+                if (plot_results and can_plot):
+                    y = f(X0,*(popts[index]))
+                    plt.plot(X0,y)
 
-    popts_total.append(popts)
+            popts_total.append(popts)
 
-    # Finally show the whole plot
-    if (plot_results and can_plot):
-        plt.show(block=False)
+            # Finally show the whole plot
+            if (plot_results and can_plot):
+                plt.show()
 
 ################################################################################
 # RESULTS EXPORT

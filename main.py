@@ -96,7 +96,7 @@ dataset_codes = []
 for condition in conditions_numbers:
     for subject in subjects_numbers:
         for electrode in electrodes_numbers:
-            dataset_codes.append([condition, subject, electrode])
+            dataset_codes.append([subject, condition, electrode])
             dataset_index+=1
             if not isinstance(electrode, collections.Iterable):
                 electrode = [electrode]

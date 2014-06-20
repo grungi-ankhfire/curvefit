@@ -48,7 +48,13 @@ def exportResults(filename, options, func_names, fitting_functions,
     index = 0
     for i,scores in enumerate(fitting_scores):
         for j in range(len(func_names)):
-            f.write(str(datasets_codes[index]) + " " + str(func_names[j]) + " " + str(popts[i][j]) + " " + str(scores[j]) + "\n")
+            string = ""
+            for code in datasets_codes[i]:
+                string += str(code) + " "
+            string += str(func_names[j]) + " "
+            for param in popts[i][j]:
+                string += str(param) + " "
+            f.write(string  + str(scores[j]) + "\n")
             index+=1
 
     # f.write("Curve fitting results - " + time.strftime("%c") + "\n")

@@ -33,7 +33,7 @@ data_file = "DataforBastien.csv"
 #           x..y : include isolated electrodes from x to y (included)
 #           x+y : average several electrodes
 # ex : "1, 2, 3, 4..10, 11+12, 13, 14"
-electrodes = "1,96"
+electrodes = "1+96"
 subjects = "1"
 conditions = "1"
 
@@ -92,9 +92,11 @@ for index,f in enumerate(fitting_functions):
 ################################################################################
 
 dataset_index = -1
+dataset_codes = []
 for condition in conditions_numbers:
     for subject in subjects_numbers:
         for electrode in electrodes_numbers:
+            dataset_codes.append([condition, subject, electrode])
             dataset_index+=1
             if not isinstance(electrode, collections.Iterable):
                 electrode = [electrode]
@@ -147,5 +149,5 @@ options = {"Data file" : data_file,
           }
 
 exportResults(results_file, options, fitting_functions_names, fitting_functions,
-              fitting_scores, popts_total)
+              fitting_scores, popts_total, dataset_codes)
 

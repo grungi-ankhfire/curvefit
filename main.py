@@ -69,7 +69,7 @@ x = np.arange(1,d.shape[3]+1)
 y = np.zeros(x.shape)
 
 # Will contain the norm of the error of each fitted function
-fitting_scores = np.zeros([len(electrodes_numbers),len(fitting_functions)])
+fitting_scores = np.zeros([len(electrodes_numbers)*len(conditions_numbers)*len(subjects_numbers),len(fitting_functions)])
 
 # Will contain the optimal parameters for each fitted function, for each
 # data set. First indice is for dataset, second for function.
@@ -148,6 +148,9 @@ options = {"Data file" : data_file,
            "Number of tests" : num_X0
           }
 
+print "Exporting results to file " + results_file
+
 exportResults(results_file, options, fitting_functions_names, fitting_functions,
               fitting_scores, popts_total, dataset_codes)
 
+print "All done!"

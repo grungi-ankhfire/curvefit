@@ -34,7 +34,7 @@ def parseList(input_string):
     return output
 
 def exportResults(filename, options, func_names, fitting_functions,
-                  fitting_scores, popts, datasets_codes):
+                  fitting_scores, popts, datasets_codes, r_squared_coeffs):
     """
     Export the curve fitting results into the file filename.
 
@@ -54,14 +54,14 @@ def exportResults(filename, options, func_names, fitting_functions,
             string += str(func_names[j]) + " "
             for param in popts[i][j]:
                 string += str(param) + " "
-            f.write(string  + str(scores[j]) + "\n")
+            f.write(string  + str(scores[j]) + " " + str(r_squared_coeffs[i][j]) + "\n")    
             index+=1
 
     # f.write("Curve fitting results - " + time.strftime("%c") + "\n")
     # f.write("\n")
     # f.write("Options :\n")
     # for key,value in options.iteritems():
-    #     f.write(key + " : " + str(value) + "\n")
+    #     f.write(key + " : " + str(value) + "\numpy")
     # f.write("\n")
     # f.write("Function reference\n")
     # for i,func in enumerate(fitting_functions):

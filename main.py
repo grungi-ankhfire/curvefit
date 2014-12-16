@@ -33,9 +33,9 @@ data_file = "DataforBastien.csv"
 #           x..y : include isolated electrodes from x to y (included)
 #           x+y : average several electrodes
 # ex : "1, 2, 3, 4..10, 11+12, 13, 14"
-electrodes = "1+96"
+electrodes = "96"
 subjects = "1"
-conditions = "1"
+conditions = "5"
 
 # Name of the file for the export
 results_file = "results.txt"
@@ -70,6 +70,7 @@ y = np.zeros(x.shape)
 
 # Will contain the norm of the error of each fitted function
 fitting_scores = np.zeros([len(electrodes_numbers)*len(conditions_numbers)*len(subjects_numbers),len(fitting_functions)])
+r_squared_coeffs = np.zeros([len(electrodes_numbers)*len(conditions_numbers)*len(subjects_numbers),len(fitting_functions)])
 
 # Will contain the optimal parameters for each fitted function, for each
 # data set. First indice is for dataset, second for function.
@@ -134,6 +135,14 @@ for condition in conditions_numbers:
                     y = f(X0,*(popts[index]))
                     plt.plot(X0,y)
 
+                # Compute R-Squared
+                y_bar = np.mean(dataset[:])
+                SS_tot = np.sum((dataset[:] - y_bar)**2)
+                f_i = f(x,*(popts[index]))
+                SS_res = np.sum((dataset[:] - f_i)**2)
+                r_squared = 1.0 - SS_res / SS_tot
+                r_squared_coeffs[dataset_index][index] = r_squared
+
             popts_total.append(popts)
 
             # Finally show the whole plot
@@ -151,6 +160,6 @@ options = {"Data file" : data_file,
 print "Exporting results to file " + results_file
 
 exportResults(results_file, options, fitting_functions_names, fitting_functions,
-              fitting_scores, popts_total, dataset_codes)
+              fitting_scores, popts_total, dataset_codes, r_squared_coeffs)
 
 print "All done!"
